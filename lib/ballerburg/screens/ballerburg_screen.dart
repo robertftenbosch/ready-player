@@ -100,73 +100,149 @@ class _BallerburgScreenState extends ConsumerState<BallerburgScreen> {
               ref.read(ballerburgGameProvider.notifier).resetGame(),
         ),
       ],
-      body: Column(
-        children: [
-          // Wind indicator
-          Padding(
-            padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 4),
-            child: WindIndicator(wind: gameState.wind),
-          ),
-          // Game canvas
-          Expanded(
-            flex: 3,
-            child: Padding(
-              padding: const EdgeInsets.symmetric(horizontal: 4),
-              child: BallerburgCanvas(gameState: gameState),
-            ),
-          ),
-          // Controls
-          if (showControls) ...[
-            Padding(
-              padding: const EdgeInsets.symmetric(horizontal: 16),
-              child: AngleSelector(
-                value: _angle,
-                onChanged: (v) => setState(() => _angle = v),
-              ),
-            ),
-            const SizedBox(height: 4),
-            Padding(
-              padding: const EdgeInsets.symmetric(horizontal: 16),
-              child: PowderSelector(
-                value: _powder,
-                onChanged: (v) => setState(() => _powder = v),
-              ),
-            ),
-            const SizedBox(height: 8),
-            PixelButton(
-              text: fireButtonText,
-              color: RetroColors.accent,
-              onPressed: () {
-                if (gameState.isPlayer2Turn) {
-                  ref.read(ballerburgGameProvider.notifier).player2Shoot(
-                        angle: _angle,
-                        powder: _powder,
-                      );
-                } else {
-                  ref.read(ballerburgGameProvider.notifier).playerShoot(
-                        angle: _angle,
-                        powder: _powder,
-                      );
-                }
-              },
-            ),
-            const SizedBox(height: 8),
-          ] else ...[
-            Padding(
-              padding: const EdgeInsets.all(16),
-              child: Text(
-                gameState.statusText,
-                style: const TextStyle(
-                  fontFamily: 'PressStart2P',
-                  fontSize: 8,
-                  color: RetroColors.secondary,
+      body: OrientationBuilder(
+        builder: (context, orientation) {
+          final isLandscape = orientation == Orientation.landscape;
+
+          final canvasWidget = Padding(
+            padding: const EdgeInsets.symmetric(horizontal: 4),
+            child: BallerburgCanvas(gameState: gameState),
+          );
+
+          final windWidget = WindIndicator(wind: gameState.wind);
+
+          final controlsOrStatus = showControls
+              ? _buildControls(fireButtonText, gameState, ref, isLandscape)
+              : _buildStatusText(gameState, isLandscape);
+
+          if (isLandscape) {
+            return Row(
+              children: [
+                // Left side: game canvas
+                Expanded(
+                  flex: 3,
+                  child: canvasWidget,
                 ),
-                textAlign: TextAlign.center,
+                // Right side: wind + controls
+                Expanded(
+                  flex: 1,
+                  child: SingleChildScrollView(
+                    padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                    child: Column(
+                      mainAxisAlignment: MainAxisAlignment.center,
+                      children: [
+                        windWidget,
+                        const SizedBox(height: 8),
+                        ...controlsOrStatus,
+                      ],
+                    ),
+                  ),
+                ),
+              ],
+            );
+          }
+
+          // Portrait layout (unchanged)
+          return Column(
+            children: [
+              Padding(
+                padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 4),
+                child: windWidget,
               ),
-            ),
-          ],
-        ],
+              Expanded(
+                flex: 3,
+                child: canvasWidget,
+              ),
+              ...controlsOrStatus,
+            ],
+          );
+        },
       ),
     );
+  }
+
+  List<Widget> _buildControls(
+    String fireButtonText,
+    BallerburgGameState gameState,
+    WidgetRef ref,
+    bool isLandscape,
+  ) {
+    if (isLandscape) {
+      return [
+        AngleSelector(
+          value: _angle,
+          onChanged: (v) => setState(() => _angle = v),
+        ),
+        const SizedBox(height: 4),
+        PowderSelector(
+          value: _powder,
+          onChanged: (v) => setState(() => _powder = v),
+        ),
+        const SizedBox(height: 8),
+        PixelButton(
+          text: fireButtonText,
+          color: RetroColors.accent,
+          onPressed: () => _fire(gameState, ref),
+        ),
+        const SizedBox(height: 8),
+      ];
+    }
+    return [
+      Padding(
+        padding: const EdgeInsets.symmetric(horizontal: 16),
+        child: AngleSelector(
+          value: _angle,
+          onChanged: (v) => setState(() => _angle = v),
+        ),
+      ),
+      const SizedBox(height: 4),
+      Padding(
+        padding: const EdgeInsets.symmetric(horizontal: 16),
+        child: PowderSelector(
+          value: _powder,
+          onChanged: (v) => setState(() => _powder = v),
+        ),
+      ),
+      const SizedBox(height: 8),
+      PixelButton(
+        text: fireButtonText,
+        color: RetroColors.accent,
+        onPressed: () => _fire(gameState, ref),
+      ),
+      const SizedBox(height: 8),
+    ];
+  }
+
+  List<Widget> _buildStatusText(BallerburgGameState gameState, bool isLandscape) {
+    return [
+      Padding(
+        padding: isLandscape
+            ? const EdgeInsets.all(8)
+            : const EdgeInsets.all(16),
+        child: Text(
+          gameState.statusText,
+          style: const TextStyle(
+            fontFamily: 'PressStart2P',
+            fontSize: 8,
+            color: RetroColors.secondary,
+          ),
+          textAlign: TextAlign.center,
+        ),
+      ),
+    ];
+  }
+
+  void _fire(BallerburgGameState gameState, WidgetRef ref) {
+    if (gameState.isPlayer2Turn) {
+      ref.read(ballerburgGameProvider.notifier).player2Shoot(
+            angle: _angle,
+            powder: _powder,
+          );
+    } else {
+      ref.read(ballerburgGameProvider.notifier).playerShoot(
+            angle: _angle,
+            powder: _powder,
+          );
+    }
   }
 }

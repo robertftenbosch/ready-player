@@ -89,11 +89,27 @@ class _ChessScreenState extends ConsumerState<ChessScreen> {
               ref.read(chessGameProvider.notifier).resetGame(),
         ),
       ],
-      body: Column(
-        children: [
-          const SizedBox(height: 8),
-          // Status bar
-          Padding(
+      body: OrientationBuilder(
+        builder: (context, orientation) {
+          final isLandscape = orientation == Orientation.landscape;
+          final flipped = !isLandscape &&
+              widget.gameMode == GameMode.vsPlayer &&
+              gameState.board.activeColor == PieceColor.black;
+
+          final boardWidget = ChessBoardWidget(
+            board: gameState.board,
+            selectedSquare: _selectedSquare,
+            legalMoves: _selectedSquare != null
+                ? gameState.getLegalMovesFrom(_selectedSquare!)
+                : [],
+            onSquareTapped: (square) => _onSquareTapped(square, gameState),
+            flipped: flipped,
+            lastMove: gameState.moveHistory.isNotEmpty
+                ? gameState.moveHistory.last
+                : null,
+          );
+
+          final statusWidget = Padding(
             padding: const EdgeInsets.symmetric(horizontal: 16),
             child: Text(
               gameState.statusText,
@@ -103,37 +119,57 @@ class _ChessScreenState extends ConsumerState<ChessScreen> {
                 color: RetroColors.secondary,
               ),
             ),
-          ),
-          const SizedBox(height: 8),
-          // Board
-          Padding(
-            padding: const EdgeInsets.symmetric(horizontal: 8),
-            child: AspectRatio(
-              aspectRatio: 1,
-              child: ChessBoardWidget(
-                board: gameState.board,
-                selectedSquare: _selectedSquare,
-                legalMoves: _selectedSquare != null
-                    ? gameState.getLegalMovesFrom(_selectedSquare!)
-                    : [],
-                onSquareTapped: (square) => _onSquareTapped(square, gameState),
-                flipped: widget.gameMode == GameMode.vsPlayer &&
-                    gameState.board.activeColor == PieceColor.black,
-                lastMove: gameState.moveHistory.isNotEmpty
-                    ? gameState.moveHistory.last
-                    : null,
-              ),
-            ),
-          ),
-          const SizedBox(height: 8),
-          // Move log
-          Expanded(
+          );
+
+          final moveLogWidget = Expanded(
             child: Padding(
               padding: const EdgeInsets.symmetric(horizontal: 16),
               child: ChessMoveLog(moves: gameState.moveNotations),
             ),
-          ),
-        ],
+          );
+
+          if (isLandscape) {
+            return Row(
+              children: [
+                Padding(
+                  padding: const EdgeInsets.all(8),
+                  child: AspectRatio(
+                    aspectRatio: 1,
+                    child: boardWidget,
+                  ),
+                ),
+                Expanded(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      const SizedBox(height: 8),
+                      statusWidget,
+                      const SizedBox(height: 8),
+                      moveLogWidget,
+                    ],
+                  ),
+                ),
+              ],
+            );
+          }
+
+          return Column(
+            children: [
+              const SizedBox(height: 8),
+              statusWidget,
+              const SizedBox(height: 8),
+              Padding(
+                padding: const EdgeInsets.symmetric(horizontal: 8),
+                child: AspectRatio(
+                  aspectRatio: 1,
+                  child: boardWidget,
+                ),
+              ),
+              const SizedBox(height: 8),
+              moveLogWidget,
+            ],
+          );
+        },
       ),
     );
   }

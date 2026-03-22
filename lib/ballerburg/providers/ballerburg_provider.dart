@@ -92,7 +92,7 @@ class BallerburgGameNotifier extends Notifier<BallerburgGameState> {
     final mountain = TerrainGenerator.generate(
       w,
       h * 0.85,
-      h * 0.35,
+      h * 0.55,
     );
 
     final rng = Random();
@@ -111,15 +111,9 @@ class BallerburgGameNotifier extends Notifier<BallerburgGameState> {
     );
   }
 
-  void updateCanvasSize(double width, double height) {
-    if ((state.canvasWidth - width).abs() > 1 ||
-        (state.canvasHeight - height).abs() > 1) {
-      // Only rebuild if this is the initial default size
-      if (state.canvasWidth == 400.0 && state.canvasHeight == 300.0) {
-        state = _createInitialState(width, height);
-      }
-    }
-  }
+  /// Canvas size is no longer used to rebuild game state.
+  /// The painter scales from logical coords (400x300) to actual widget size.
+  void updateCanvasSize(double width, double height) {}
 
   void playerShoot({required double angle, required double powder}) {
     if (state.phase != BallerburgPhase.playerTurn) return;

@@ -14,24 +14,38 @@ class BallerburgPainter extends CustomPainter {
 
   @override
   void paint(Canvas canvas, Size size) {
+    // The game state uses a logical coordinate system (canvasWidth x canvasHeight,
+    // typically 400x300). Scale the canvas so everything renders at the correct
+    // size regardless of the actual widget dimensions.
+    final gameW = gameState.canvasWidth;
+    final gameH = gameState.canvasHeight;
+    final scaleX = size.width / gameW;
+    final scaleY = size.height / gameH;
+
+    // Use the logical game size for all renderers
+    final gameSize = Size(gameW, gameH);
+
+    canvas.save();
+    canvas.scale(scaleX, scaleY);
+
     // Layer 1: Sky with stars
-    SkyRenderer.paint(canvas, size);
+    SkyRenderer.paint(canvas, gameSize);
 
     // Layer 2: Mountain terrain
-    MountainRenderer.paint(canvas, gameState.mountain, size);
+    MountainRenderer.paint(canvas, gameState.mountain, gameSize);
 
     // Layer 3: Ground plane
     final groundPaint = Paint()
       ..isAntiAlias = false
       ..color = const Color(0xFF1A3300);
     canvas.drawRect(
-      Rect.fromLTWH(0, size.height * 0.85, size.width, size.height * 0.15),
+      Rect.fromLTWH(0, gameSize.height * 0.85, gameSize.width, gameSize.height * 0.15),
       groundPaint,
     );
 
     // Layer 4: Castles
-    CastleRenderer.paint(canvas, gameState.leftCastle, size);
-    CastleRenderer.paint(canvas, gameState.rightCastle, size);
+    CastleRenderer.paint(canvas, gameState.leftCastle, gameSize);
+    CastleRenderer.paint(canvas, gameState.rightCastle, gameSize);
 
     // Layer 5: Projectile
     ProjectileRenderer.paint(canvas, gameState.projectile);
@@ -42,6 +56,8 @@ class BallerburgPainter extends CustomPainter {
       gameState.explosionPoint,
       gameState.explosionProgress,
     );
+
+    canvas.restore();
   }
 
   @override

@@ -78,10 +78,27 @@ class _CheckersScreenState extends ConsumerState<CheckersScreen> {
               ref.read(checkersGameProvider.notifier).resetGame(),
         ),
       ],
-      body: Column(
-        children: [
-          const SizedBox(height: 8),
-          Padding(
+      body: OrientationBuilder(
+        builder: (context, orientation) {
+          final isLandscape = orientation == Orientation.landscape;
+          final flipped = !isLandscape &&
+              widget.gameMode == GameMode.vsPlayer &&
+              gameState.currentTurn == CheckersColor.black;
+
+          final boardWidget = CheckersBoardWidget(
+            board: gameState.board,
+            selectedSquare: _selectedSquare,
+            legalMoves: _selectedSquare != null
+                ? gameState.getLegalMovesFrom(_selectedSquare!)
+                : [],
+            onSquareTapped: (square) => _onSquareTapped(square, gameState),
+            flipped: flipped,
+            lastMove: gameState.moveHistory.isNotEmpty
+                ? gameState.moveHistory.last
+                : null,
+          );
+
+          final statusWidget = Padding(
             padding: const EdgeInsets.symmetric(horizontal: 16),
             child: Text(
               gameState.statusText,
@@ -91,29 +108,9 @@ class _CheckersScreenState extends ConsumerState<CheckersScreen> {
                 color: RetroColors.secondary,
               ),
             ),
-          ),
-          const SizedBox(height: 8),
-          Padding(
-            padding: const EdgeInsets.symmetric(horizontal: 4),
-            child: AspectRatio(
-              aspectRatio: 1,
-              child: CheckersBoardWidget(
-                board: gameState.board,
-                selectedSquare: _selectedSquare,
-                legalMoves: _selectedSquare != null
-                    ? gameState.getLegalMovesFrom(_selectedSquare!)
-                    : [],
-                onSquareTapped: (square) => _onSquareTapped(square, gameState),
-                flipped: widget.gameMode == GameMode.vsPlayer &&
-                    gameState.currentTurn == CheckersColor.black,
-                lastMove: gameState.moveHistory.isNotEmpty
-                    ? gameState.moveHistory.last
-                    : null,
-              ),
-            ),
-          ),
-          const SizedBox(height: 8),
-          Padding(
+          );
+
+          final pieceCountWidget = Padding(
             padding: const EdgeInsets.symmetric(horizontal: 16),
             child: Row(
               mainAxisAlignment: MainAxisAlignment.spaceAround,
@@ -136,8 +133,50 @@ class _CheckersScreenState extends ConsumerState<CheckersScreen> {
                 ),
               ],
             ),
-          ),
-        ],
+          );
+
+          if (isLandscape) {
+            return Row(
+              children: [
+                Padding(
+                  padding: const EdgeInsets.all(4),
+                  child: AspectRatio(
+                    aspectRatio: 1,
+                    child: boardWidget,
+                  ),
+                ),
+                Expanded(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      const SizedBox(height: 8),
+                      statusWidget,
+                      const SizedBox(height: 8),
+                      pieceCountWidget,
+                    ],
+                  ),
+                ),
+              ],
+            );
+          }
+
+          return Column(
+            children: [
+              const SizedBox(height: 8),
+              statusWidget,
+              const SizedBox(height: 8),
+              Padding(
+                padding: const EdgeInsets.symmetric(horizontal: 4),
+                child: AspectRatio(
+                  aspectRatio: 1,
+                  child: boardWidget,
+                ),
+              ),
+              const SizedBox(height: 8),
+              pieceCountWidget,
+            ],
+          );
+        },
       ),
     );
   }
