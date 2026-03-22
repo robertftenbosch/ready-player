@@ -15,6 +15,10 @@ class ChessBoardWidget extends StatefulWidget {
   final ChessMove? lastMove;
   final VoidCallback? onAnimationComplete;
 
+  /// When true, black pieces are rotated 180° to face the opponent player
+  /// (for tabletop PvP in landscape).
+  final bool rotatePiecesToPlayer;
+
   const ChessBoardWidget({
     super.key,
     required this.board,
@@ -24,6 +28,7 @@ class ChessBoardWidget extends StatefulWidget {
     this.flipped = false,
     this.lastMove,
     this.onAnimationComplete,
+    this.rotatePiecesToPlayer = false,
   });
 
   @override
@@ -174,6 +179,10 @@ class _ChessBoardWidgetState extends State<ChessBoardWidget>
                                 ChessPieceWidget(
                                   piece: piece,
                                   size: squareSize * 0.7,
+                                  quarterTurns: widget.rotatePiecesToPlayer &&
+                                          piece.color == PieceColor.black
+                                      ? 2
+                                      : 0,
                                 ),
                               if (isLegalTarget && piece == null)
                                 Container(
@@ -258,6 +267,10 @@ class _ChessBoardWidgetState extends State<ChessBoardWidget>
                           child: ChessPieceWidget(
                             piece: _animatingPiece!,
                             size: squareSize * 0.7,
+                            quarterTurns: widget.rotatePiecesToPlayer &&
+                                    _animatingPiece!.color == PieceColor.black
+                                ? 2
+                                : 0,
                           ),
                         ),
                       ),

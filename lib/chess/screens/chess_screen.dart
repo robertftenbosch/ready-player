@@ -96,6 +96,9 @@ class _ChessScreenState extends ConsumerState<ChessScreen> {
               widget.gameMode == GameMode.vsPlayer &&
               gameState.board.activeColor == PieceColor.black;
 
+          final isPvP = widget.gameMode == GameMode.vsPlayer;
+          final rotatePieces = isLandscape && isPvP;
+
           final boardWidget = ChessBoardWidget(
             board: gameState.board,
             selectedSquare: _selectedSquare,
@@ -107,6 +110,7 @@ class _ChessScreenState extends ConsumerState<ChessScreen> {
             lastMove: gameState.moveHistory.isNotEmpty
                 ? gameState.moveHistory.last
                 : null,
+            rotatePiecesToPlayer: rotatePieces,
           );
 
           final statusWidget = Padding(
@@ -129,8 +133,34 @@ class _ChessScreenState extends ConsumerState<ChessScreen> {
           );
 
           if (isLandscape) {
+            final infoColumn = Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                const SizedBox(height: 8),
+                statusWidget,
+                const SizedBox(height: 8),
+                moveLogWidget,
+              ],
+            );
+
             return Row(
               children: [
+                // In PvP: black player's info (rotated 180°) on the left
+                if (isPvP)
+                  Expanded(
+                    child: RotatedBox(
+                      quarterTurns: 2,
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          const SizedBox(height: 8),
+                          statusWidget,
+                          const SizedBox(height: 8),
+                          moveLogWidget,
+                        ],
+                      ),
+                    ),
+                  ),
                 Padding(
                   padding: const EdgeInsets.all(8),
                   child: AspectRatio(
@@ -138,17 +168,8 @@ class _ChessScreenState extends ConsumerState<ChessScreen> {
                     child: boardWidget,
                   ),
                 ),
-                Expanded(
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      const SizedBox(height: 8),
-                      statusWidget,
-                      const SizedBox(height: 8),
-                      moveLogWidget,
-                    ],
-                  ),
-                ),
+                // White player's info on the right (normal orientation)
+                Expanded(child: infoColumn),
               ],
             );
           }

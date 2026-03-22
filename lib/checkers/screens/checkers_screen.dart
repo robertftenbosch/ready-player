@@ -136,8 +136,35 @@ class _CheckersScreenState extends ConsumerState<CheckersScreen> {
           );
 
           if (isLandscape) {
+            final isPvP = widget.gameMode == GameMode.vsPlayer;
+            final infoColumn = Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                const SizedBox(height: 8),
+                statusWidget,
+                const SizedBox(height: 8),
+                pieceCountWidget,
+              ],
+            );
+
             return Row(
               children: [
+                // In PvP: black player's info (rotated 180°) on the left
+                if (isPvP)
+                  Expanded(
+                    child: RotatedBox(
+                      quarterTurns: 2,
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          const SizedBox(height: 8),
+                          statusWidget,
+                          const SizedBox(height: 8),
+                          pieceCountWidget,
+                        ],
+                      ),
+                    ),
+                  ),
                 Padding(
                   padding: const EdgeInsets.all(4),
                   child: AspectRatio(
@@ -145,17 +172,7 @@ class _CheckersScreenState extends ConsumerState<CheckersScreen> {
                     child: boardWidget,
                   ),
                 ),
-                Expanded(
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      const SizedBox(height: 8),
-                      statusWidget,
-                      const SizedBox(height: 8),
-                      pieceCountWidget,
-                    ],
-                  ),
-                ),
+                Expanded(child: infoColumn),
               ],
             );
           }
